@@ -4,7 +4,7 @@ class Token {
     final TokenType type;
     final Object literal;
     final String lexeme;
-    final Object line;
+    final int line;
 
     Token(TokenType type, String lexeme, Object literal, int line) {
         this.type = type;

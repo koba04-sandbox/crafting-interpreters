@@ -2,6 +2,7 @@ package lox;
 
 import static lox.TokenType.BANG;
 import static lox.TokenType.BANG_EQUAL;
+import static lox.TokenType.CLASS;
 import static lox.TokenType.EOF;
 import static lox.TokenType.EQUAL_EQUAL;
 import static lox.TokenType.FALSE;
@@ -14,20 +15,53 @@ import static lox.TokenType.MINUS;
 import static lox.TokenType.NIL;
 import static lox.TokenType.NUMBER;
 import static lox.TokenType.PLUS;
+import static lox.TokenType.PRINT;
+import static lox.TokenType.RETURN;
 import static lox.TokenType.RIGHT_PAREN;
+import static lox.TokenType.SEMICOLON;
 import static lox.TokenType.SLASH;
 import static lox.TokenType.STAR;
 import static lox.TokenType.STRING;
 import static lox.TokenType.TRUE;
+import static lox.TokenType.VAR;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Parser {
+    private static class ParseError extends RuntimeException {}
     private final List<Token>  tokens;
     private int current = 0;
 
     Parser(List<Token> tokens) {
         this.tokens = tokens;
+    }
+
+    List<Stmt> parse() {
+        List<Stmt> statements = new ArrayList<>();
+        while (!isAtEnd()) {
+            statements.add(statement());
+        }
+
+        return statements;
+    }
+
+    private Stmt statement() {
+        if (match(PRINT)) return printStatement();
+
+        return expressionStatement();
+    }
+
+    private Stmt printStatement() {
+        Expr value = expression();
+        consume(SEMICOLON, "Expect ';' after value.");
+        return new Stmt.Print(value);
+    }
+
+    private Stmt expressionStatement() {
+        Expr expr = expression();
+        consume(SEMICOLON, "Expect ';' after expression.");
+        return new Stmt.Expression(expr);
     }
 
     // expression  -> equiality ;
@@ -67,7 +101,7 @@ public class Parser {
         while (match(MINUS, PLUS)) {
             Token operator = previous();
             Expr right = factor();
-            expr = new Expr.Binary(expr, operator, right)
+            expr = new Expr.Binary(expr, operator, right);
         }
 
         return expr;
@@ -80,7 +114,7 @@ public class Parser {
         while (match(SLASH, STAR)) {
             Token operator = previous();
             Expr right = unary();
-            expr = new Expr.Binary(expr, operator, right)
+            expr = new Expr.Binary(expr, operator, right);
         }
 
         return expr;
@@ -91,8 +125,9 @@ public class Parser {
         if (match(BANG, MINUS)) {
             Token operator = previous();
             Expr right = unary();
-            return primary();
+            return new Expr.Unary(operator, right);
         }
+        return primary();
     }
 
     // primary     -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
@@ -111,6 +146,7 @@ public class Parser {
             return new Expr.Grouping(expr);
         }
 
+        throw error(peek(), "Expect expression.");
     }
 
     private boolean match(TokenType... types) {
@@ -121,6 +157,12 @@ public class Parser {
             }
         }
         return false;
+    }
+
+    private Token consume(TokenType type, String message) {
+        if (check(type)) return advance();
+
+        throw error(peek(), message);
     }
 
     private boolean check(TokenType type) {
@@ -143,5 +185,25 @@ public class Parser {
 
     private Token previous() {
         return tokens.get(current - 1);
+    }
+
+    private ParseError error(Token token, String message) {
+        Lox.error(token, message);
+        return new ParseError();
+    }
+
+    private void synchronize() {
+        advance();
+        while (!isAtEnd()) {
+            if (previous().type == SEMICOLON) return;
+
+            switch (peek().type) {
+                case CLASS: case FOR: case FUN: case IF: case PRINT:
+                case RETURN: case VAR: case WHILE:
+                    return;
+            }
+        }
+
+        advance();
     }
 }
