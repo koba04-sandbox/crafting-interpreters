@@ -3,7 +3,10 @@
 BNF
 
 ```
-expression  -> equiality ;
+expression  -> assignment ;
+assignment  -> IDENTIFIER "=" assigngment | logic_or ;
+logic_or    -> logic_and ( "or" logic_ant )* ;
+logic_and   -> equality ( "and" equality )* ;
 equality    -> comparison ( ("!=" | "==") comparison)* ;
 comparison  -> term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term        -> factor ( ( "-" | "+" ) factor )* ;
@@ -13,8 +16,10 @@ primary     -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" |
 
 program     -> declaration* EOF ;
 declaration -> varDecl | statement ;
-statement   -> exprStmt | printStmt ;
+statement   -> exprStmt | ifStmt | printStmt | block ;
+block       -> "{" declaration* "}" ;
 exprStmt    -> expression ";" ;
 printStmt   -> "print" expression ";" ;
 varDecl     -> "var" IDENTIFIER ( "=" expression )? ";" ;
+ifStmt      -> "if" "(" expression ")" statement ( "else" statement )? ;
 ```

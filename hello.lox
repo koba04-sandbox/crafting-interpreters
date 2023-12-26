@@ -1,3 +1,2 @@
-var hello = "Hello Lox";
-print hello;
-
+print "hi" or 2;
+print nil or "yes";

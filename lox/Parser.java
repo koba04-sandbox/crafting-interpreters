@@ -1,8 +1,10 @@
 package lox;
 
+import static lox.TokenType.AND;
 import static lox.TokenType.BANG;
 import static lox.TokenType.BANG_EQUAL;
 import static lox.TokenType.CLASS;
+import static lox.TokenType.ELSE;
 import static lox.TokenType.EOF;
 import static lox.TokenType.EQUAL;
 import static lox.TokenType.EQUAL_EQUAL;
@@ -10,15 +12,19 @@ import static lox.TokenType.FALSE;
 import static lox.TokenType.GREATER;
 import static lox.TokenType.GREATER_EQUAL;
 import static lox.TokenType.IDENTIFIER;
+import static lox.TokenType.IF;
+import static lox.TokenType.LEFT_BRACE;
 import static lox.TokenType.LEFT_PAREN;
 import static lox.TokenType.LESS;
 import static lox.TokenType.LESS_EQUAL;
 import static lox.TokenType.MINUS;
 import static lox.TokenType.NIL;
 import static lox.TokenType.NUMBER;
+import static lox.TokenType.OR;
 import static lox.TokenType.PLUS;
 import static lox.TokenType.PRINT;
 import static lox.TokenType.RETURN;
+import static lox.TokenType.RIGHT_BRACE;
 import static lox.TokenType.RIGHT_PAREN;
 import static lox.TokenType.SEMICOLON;
 import static lox.TokenType.SLASH;
@@ -29,6 +35,8 @@ import static lox.TokenType.VAR;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import lox.Stmt.If;
 
 public class Parser {
     private static class ParseError extends RuntimeException {}
@@ -59,9 +67,25 @@ public class Parser {
     }
 
     private Stmt statement() {
+        if (match(IF)) return ifStatement();
         if (match(PRINT)) return printStatement();
+        if (match(LEFT_BRACE)) return new Stmt.Block(block());
 
         return expressionStatement();
+    }
+
+
+    private Stmt ifStatement() {
+        consume(LEFT_PAREN, "Expect '(' after 'if'.");
+        Expr condition = expression();
+        consume(RIGHT_PAREN, "Expect ')' after if condition.");
+
+        Stmt thenBranch = statement();
+        Stmt elseBranch = null;
+        if (match(ELSE)) {
+            elseBranch = statement();
+        }
+        return new Stmt.If(condition, thenBranch, elseBranch);
     }
 
     private Stmt printStatement() {
@@ -88,9 +112,62 @@ public class Parser {
         return new Stmt.Expression(expr);
     }
 
+    private List<Stmt> block() {
+        List<Stmt> statements = new ArrayList<>();
+
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            statements.add(declaration());
+        }
+
+        consume(RIGHT_BRACE, "Expect '}' after block.");
+        return statements;
+    }
+
     // expression  -> equiality ;
     private Expr expression() {
-        return equality();
+        return assignment();
+    }
+
+    private Expr assignment() {
+        Expr expr = or();
+
+        if (match(EQUAL)) {
+            Token equals = previous();
+            Expr value = assignment();
+
+            if (expr instanceof Expr.Variable) {
+                Token name = ((Expr.Variable)expr).name;
+                return new Expr.Assign(name, value);
+            }
+
+            error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
+    }
+
+    private Expr or() {
+        Expr expr = and();
+
+        while (match(OR)) {
+            Token operator = previous();
+            Expr right = and();
+            expr = new Expr.Logical(expr, operator, right);
+        }
+
+        return expr;
+    }
+
+    private Expr and() {
+        Expr expr = equality();
+
+        while (match(AND)) {
+            Token operator = previous();
+            Expr right = equality();
+            expr = new Expr.Logical(expr, operator, right);
+        }
+
+        return expr;
     }
 
     // equality    -> comparison ( ("!=" | "==") comparison)* ;
