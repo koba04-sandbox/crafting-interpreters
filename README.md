@@ -16,10 +16,12 @@ primary     -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" |
 
 program     -> declaration* EOF ;
 declaration -> varDecl | statement ;
-statement   -> exprStmt | ifStmt | printStmt | block ;
+statement   -> exprStmt | forStmt | ifStmt | printStmt | whileStmt | block ;
 block       -> "{" declaration* "}" ;
 exprStmt    -> expression ";" ;
 printStmt   -> "print" expression ";" ;
 varDecl     -> "var" IDENTIFIER ( "=" expression )? ";" ;
 ifStmt      -> "if" "(" expression ")" statement ( "else" statement )? ;
+whileStmt   -> "while" "(" expression ")" statement ;
+forStmt     -> "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
 ```
