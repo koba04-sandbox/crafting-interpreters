@@ -29,4 +29,5 @@ parameters  -> IDENTIFIER ( "," IDENTIFIER )* ;
 ifStmt      -> "if" "(" expression ")" statement ( "else" statement )? ;
 whileStmt   -> "while" "(" expression ")" statement ;
 forStmt     -> "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
+returnStmt  -> "return" expression? ";" ;
 ```
