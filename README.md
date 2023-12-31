@@ -14,7 +14,7 @@ factory     -> unary ( ("/" | "*") unary )* ;
 unary       -> ( "!" | "-" ) unary | call ;
 call        -> primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
 arguments   -> expression ( "," expression )* ;
-primary     -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
+primary     -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER | "super" "." IDENTIFIER;
 
 program     -> declaration* EOF ;
 declaration -> classDecl | funDecl | varDecl | statement ;
@@ -23,7 +23,7 @@ block       -> "{" declaration* "}" ;
 exprStmt    -> expression ";" ;
 printStmt   -> "print" expression ";" ;
 varDecl     -> "var" IDENTIFIER ( "=" expression )? ";" ;
-classDecl   -> "class" IDENTIFIER "{" function* "}" ;
+classDecl   -> "class" IDENTIFIER ( "<" IDENTIFIER )? "{" function* "}" ;
 funDecl     -> "fun" function ;
 function    -> IDENTIFIER "(" parameters? ")" block ;
 parameters  -> IDENTIFIER ( "," IDENTIFIER )* ;
