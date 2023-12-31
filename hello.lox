@@ -5,7 +5,11 @@ class Doughnut {
 }
 
 class BostonCream < Doughnut {
+    init() {
+        this.message = "start cooking.";
+    }
     cook() {
+        print this.message;
         super.cook();
         print "Pipe full of custand and coat with chocolate.";
     }
